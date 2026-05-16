@@ -37,8 +37,7 @@ The implementation features a dynamic tuning framework that sweeps degrees from 
 ### Model Generalization Fit
 *The surface plots confirm an excellent overlay between the synthesized polynomial model and the independent validation data, demonstrating strong generalization.*
 
-| Raw Surface Over Noise | Optimal Surface Validation Overlay | Validation Curve (MSE vs. Degree) |
+| Raw Surface Over Noise | Optimal Surface Validation Overlay | Validation Curve (MSE on Identification vs on Validation) |
 | :---: | :---: | :---: |
-| ![Raw Input Mesh Placeholder](https://via.placeholder.com/300x200?text=Raw+Input+Mesh) | ![Validation Surface Overlay Placeholder](https://via.placeholder.com/300x200?text=Validation+Surface+Overlay) | ![MSE vs Degree Plot Placeholder](https://via.placeholder.com/300x200?text=MSE+vs+Degree+Plot) |
+| <img width="497" height="372" alt="image" src="https://github.com/user-attachments/assets/435145d0-e3b4-4d69-adc4-6dac8fb5e456" /> | <img width="495" height="373" alt="image" src="https://github.com/user-attachments/assets/481a8127-5472-490f-907d-8ec6aaea94cb" /> | <img width="542" height="403" alt="image" src="https://github.com/user-attachments/assets/70b9ea40-613f-47cf-9937-4ebc6964e71f" />|
 
-*(Note: Replace these placeholders with screenshots exported from your project slides!)*
