@@ -1,44 +1,59 @@
-# Part 1: Noisy Multi-Variable Function Fitting & Least-Squares Regression
+# Part 2: Polynomial Nonlinear AutoRegressive with Exogenous Input (NARX) Modeling
 
-## 📝 Problem Statement
-[cite_start]Given a dataset containing an input grid of two independent variables ($x_1, x_2$) and a scalar output matrix $Y$ corrupted by additive, zero-mean Gaussian noise [cite: 17, 23, 24, 172][cite_start], the objective is to build a configurable-degree polynomial approximator $\hat{g}(x)$ that maps the true underlying static function $f(x_1, x_2)$ while ignoring environmental noise[cite: 15, 16, 25, 174].
-
----
-
-## 📐 Mathematical Formulation
-[cite_start]The approximator model handles multi-variable structural expansion up to degree $m$[cite: 25]. [cite_start]For example, a 2nd-degree configuration transforms the system into[cite: 28]:
-
-$$\hat{g}(x) = [1, x_1, x_2, x_1^2, x_2^2, x_1x_2] \cdot \Theta$$
-
-[cite_start]The core parameter extraction engine sets up the global regressor matrix $\Phi$ [cite: 180, 183] [cite_start]and optimizes the weight vector $\Theta$ in a least-squares sense using the linear regression framework[cite: 31, 32]:
-
-$$\Theta = (\Phi^T\Phi)^{-1}\Phi^T Y$$
+## 📝 Project Objective
+While static systems are memoryless, real-world physical processes feature behaviors deeply dependent on historical states. This initiative expands on linear modeling by developing an autonomous, black-box **Polynomial NARX model** designed to capture complex system lag, memory transitions, and non-linear interactions over time within a noisy Single-Input Single-Output (SISO) dynamic system.
 
 ---
 
-## 💡 Engineering & Algorithmic Highlights
+## 📐 Model Architecture
+The mathematical representation of our NARX structure uses system delays ($n_a, n_b$) and an activation polynomial function $p$ of degree $m$:
 
-[cite_start]To build the regressor matrix $\Phi$, we engineered and evaluated three separate software architectures to balance performance, memory usage, and structural clarity[cite: 240]:
+$$\hat{y}(k) = p(y(k-1), \dots, y(k-n_a), u(k-1), \dots, u(k-n_b))$$
 
-1.  [cite_start]**Column-by-Column Matrix Generator:** Computes polynomial features natively using nested expansion loops[cite: 241, 252, 254].
-2.  [cite_start]**Optimized Vectorized Grid Architecture (Best Solution):** Leverages MATLAB’s native `meshgrid` operations and array virtualization (`[:]`)[cite: 268, 307]. [cite_start]By entirely avoiding looping penalties, it delivers massive performance gains for large grids[cite: 398].
-3.  [cite_start]**Element-by-Element Stream Architecture:** Computes row vectors iteratively [cite: 270, 330][cite_start], serving as a safe layout for hardware with tight local memory allocations[cite: 276, 277].
+Given an expansion where $n_a=n_b=1$ and degree $m=2$, the expanded state space computes as:
 
-### 📈 Hyperparameter Optimization & Model Selection
-[cite_start]The software includes a dynamic tuning framework that sweeps degrees from $m = 1$ to $m = 15$ [cite: 447] [cite_start]to locate the absolute global minimum of Mean Squared Error (MSE) on the validation dataset[cite: 378, 394].
+$$y(k) = a y(k-1) + b u(k-1) + c y^2(k-1) + v u^2(k-1) + w u(k-1)y(k-1) + z$$
 
-* [cite_start]**Underfitting Regimes:** Lower degrees ($m < 4$) fail to capture the curvature of the non-linear surface[cite: 397].
-* [cite_start]**Overfitting Regimes:** Higher degrees ($m > 10$) trigger structural over-parameterization, where the model mistakenly treats zero-mean noise as genuine system behavior[cite: 41, 397].
+Since the equations remain fully **linear in their parameters**, the multi-dimensional parameter matrix $\Theta$ is resolved efficiently via regression mappings.
 
 ---
 
-## 📊 Results Visualization
+## 💡 Engineering Features & Technical Accomplishments
 
-### Model Generalization Fit
-*The surface plots confirm a pristine overlay between the synthesized polynomial model and the independent validation data, validating excellent generalization.*
+### 1. Dual-Mode Evaluation Engines
+To evaluate the model's robustness under different operational constraints, the execution engine was built to run in two distinct mathematical modes:
+* **One-Step-Ahead Prediction Mode:** Utilizes actual historical system outputs $y(k-i)$ to forecast the immediate next state. This represents an ideal scenario, yielding exceptional tracking accuracy.
+* **Autonomous Simulation Mode:** Operates entirely independently of real system feedback. It recursively feeds back its own previous estimations $\tilde{y}(k-i)$ to predict future states. This approach exposes cumulative structural drift, serving as the ultimate test for true model validity.
 
-| Raw Surface Over Noise | Optimal Surface Validation Overlay | Validation Curve (MSE vs. Degree) |
-| :---: | :---: | :---: |
-| ![Raw Data Placeholder](https://via.placeholder.com/300x200?text=Raw+Input+Mesh) | ![Overlay Placeholder](https://via.placeholder.com/300x200?text=Validation+Surface+Overlay) | ![Validation Curve](https://via.placeholder.com/300x200?text=MSE+vs+Degree+Plot) |
+### 2. Exponent-Table Combinatorial Generator
+To support high-order configurations without hardcoding rigid nested loops, we engineered an **Exponent-Table Polynomial Expansion routine**. It programmatically generates an index lookup table matching all valid feature combinations up to degree $m$, calculating rows using compact product transformations:
 
-[cite_start]*(Note: Replace placeholders with your exported figures from your documentation slides!)* [cite: 285, 310, 374]
+$$\Phi_k(r) = \prod_{i} d_i^{\text{pow}(r,i)}$$
+
+This approach decouples structural configuration from implementation limits, providing high architectural flexibility.
+
+---
+
+## 📊 Hyperparameter Sweep Metrics & Insights
+We conducted an extensive multi-dimensional sweep across orders $n_a = n_b \in [1, 6]$ and degrees $m \in [1, 3]$ to pinpoint the absolute best-performing configuration.
+
+### Performance Summary Table
+
+| Dataset Context | Evaluation Mode | Optimal Parameters ($n_a = n_b, m$) | Resulting Mean Squared Error (MSE) |
+| :--- | :--- | :---: | :---: |
+| **Identification Set** | Prediction Criterion | $n_a=n_b=6, \ m=3$ | **0.000000** |
+| **Identification Set** | Simulation Criterion | $n_a=n_b=2, \ m=3$ | **0.022938** |
+| **Validation Set** | Prediction Criterion | $n_a=n_b=5, \ m=1$ | **0.000015** |
+| **Validation Set** | Simulation Criterion | $n_a=n_b=6, \ m=1$ | **0.161346** |
+
+### 🔍 Key Engineering Takeaway
+While complex models ($m=3$) achieved a near-zero error rate on training data, testing against independent validation data revealed a classic overfitting profile. The models that generalized best across unseen operational data ultimately utilized linear mappings ($m=1$) paired with deeper historical memory horizons.
+
+---
+
+## 📈 System Track Projections
+*Below are our tracking performance comparisons against validation data over time, illustrating prediction accuracy versus simulated drift.*
+
+| One-Step-Ahead Prediction Tracking | Free-Running Simulation Performance |
+| :---: | :---: |
+| <img width="765" height="485" alt="image" src="https://github.com/user-attachments/assets/e3eb45a6-16c0-4420-bc2b-fcddcae7a8e2" />| <img width="781" height="482" alt="image" src="https://github.com/user-attachments/assets/9c6426cf-2a37-40e3-a94e-391143bdd721" />|
